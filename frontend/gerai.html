@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CRUD Gerai</title>
+</head>
+<body>
+    <h1>Manajemen Gerai</h1>
+    <form id="geraiForm">
+        <input type="text" id="id_gerai" placeholder="ID Gerai" required>
+        <input type="text" id="alamat" placeholder="Alamat Gerai" required>
+        <input type="text" id="jam_operasional" placeholder="Jam Operasional" required>
+        <input type="text" id="kepala_toko" placeholder="Kepala Toko" required>
+        <input type="text" id="domisili" placeholder="Domisili" required>
+        <input type="number" id="contact" placeholder="Contact" required>
+        <button type="submit">Tambah Gerai</button>
+    </form>
+
+    <br>
+    <table border="1" cellpadding="8" cellspacing="0" id="geraiTable">
+        <thead>
+            <tr>
+                <th>ID Gerai</th>
+                <th>Alamat</th>
+                <th>Jam Operasional</th>
+                <th>Kepala Toko</th>
+                <th>Domisili</th>
+                <th>Contact</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <br><br>
+    <a href="index.html" style="
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+    ">⬅️ Kembali ke Beranda</a>
+
+    <script>
+        const apiURL = 'http://localhost:3000/api/gerai';
+
+        async function loadGerai() {
+            const res = await fetch(apiURL);
+            const data = await res.json();
+            const tbody = document.querySelector('#geraiTable tbody');
+            tbody.innerHTML = '';
+            data.forEach(gerai => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${gerai.id_gerai}</td>
+                    <td>${gerai.alamat}</td>
+                    <td>${gerai.jam_operasional}</td>
+                    <td>${gerai.kepala_toko}</td>
+                    <td>${gerai.domisili}</td>
+                    <td>${gerai.contact}</td>
+                    <td>
+                        <button onclick="hapusGerai('${gerai._id}')">Hapus</button>
+                        <button onclick="editGerai('${gerai._id}', '${gerai.id_gerai}', '${gerai.alamat}', '${gerai.jam_operasional}', '${gerai.kepala_toko}', '${gerai.domisili}', '${gerai.contact}')">Edit</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        async function tambahGerai(e){
+            e.preventDefault();
+            const id_gerai = document.getElementById('id_gerai').value;
+            const alamat = document.getElementById('alamat').value;
+            const jam_operasional = document.getElementById('jam_operasional').value;
+            const kepala_toko = document.getElementById('kepala_toko').value;
+            const domisili = document.getElementById('domisili').value;
+            const contact = document.getElementById('contact').value;
+
+            await fetch(apiURL, {
+                method:'POST',
+                headers : {'Content-Type' :'application/json'},
+                body: JSON.stringify({ id_gerai, alamat, jam_operasional, kepala_toko, domisili, contact })
+            });
+
+            document.getElementById('geraiForm').reset();
+            loadGerai();
+        }
+
+        async function hapusGerai(id){
+            await fetch(`${apiURL}/${id}`, {method:'DELETE'});
+            loadGerai();
+        }
+
+        function editGerai(id, id_gerai, alamat, jam_operasional, kepala_toko, domisili, contact){
+            document.getElementById('id_gerai').value = id_gerai;
+            document.getElementById('alamat').value = alamat;
+            document.getElementById('jam_operasional').value = jam_operasional;
+            document.getElementById('kepala_toko').value = kepala_toko;
+            document.getElementById('domisili').value = domisili;
+            document.getElementById('contact').value = contact;
+
+            const form = document.getElementById('geraiForm');
+            form.removeEventListener('submit', tambahGerai);
+
+            form.onsubmit = async function (e) {
+                e.preventDefault();
+                await fetch(`${apiURL}/${id}`,{
+                    method: 'PUT',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({
+                        id_gerai: document.getElementById('id_gerai').value,
+                        alamat: document.getElementById('alamat').value,
+                        jam_operasional: document.getElementById('jam_operasional').value,
+                        kepala_toko: document.getElementById('kepala_toko').value,
+                        domisili: document.getElementById('domisili').value,
+                        contact: document.getElementById('contact').value
+                    }) 
+                });
+                form.reset();
+                form.onsubmit = null;
+                form.addEventListener('submit', tambahGerai);
+                loadGerai();
+            };
+        }
+
+        document.getElementById('geraiForm').addEventListener('submit', tambahGerai);
+        loadGerai();
+    </script>
+</body>
+</html>

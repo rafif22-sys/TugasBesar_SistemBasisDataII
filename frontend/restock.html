@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CRUD Restock</title>
+</head>
+<body>
+    <h1>Manajemen Restock</h1>
+    <form id="restockForm">
+        <input type="text" id="id_restock" placeholder="ID Restock" required>
+        <input type="text" id="id_suplier" placeholder="ID Suplier" required>
+        <input type="text" id="id_produk" placeholder="ID Produk" required>
+        <input type="text" id="id_admin" placeholder="ID Admin" required>
+        <input type="text" id="nama_produk" placeholder="Nama Produk" required>
+        <input type="number" id="harga_beli_per_satuan" placeholder="Harga Beli/satuan" required>
+        <input type="number" id="jumlah_penambahan_stock" placeholder="Jumlah" required>
+        <input type="date" id="tanggal_restock" placeholder="Tanggal Restock" required>
+
+        <button type="submit">Tambah Data Restock</button>
+    </form>
+
+    <br>
+    <table border="1" id="restockTable">
+        <thead>
+            <tr>
+                <th>ID Restock</th>
+                <th>ID Suplier</th>
+                <th>ID Produk</th>
+                <th>ID Admin</th>
+                <th>Nama Produk</th>
+                <th>Harga Beli/Satuan</th>
+                <th>Jumlah</th>
+                <th>Tanggal</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody id="restockList"></tbody>
+    </table>
+
+    <script>
+        const apiURL = 'http://localhost:3000/api/restock';
+
+        function formatTanggal(tanggalISO) {
+            const date = new Date(tanggalISO);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        async function loadRestock() {
+            const res = await fetch(apiURL);
+            const data = await res.json();
+            const list = document.getElementById('restockList');
+            list.innerHTML = '';
+            data.forEach(restock => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${restock.id_restock}</td>
+                    <td>${restock.id_suplier}</td>
+                    <td>${restock.id_produk}</td>
+                    <td>${restock.id_admin}</td>
+                    <td>${restock.nama_produk}</td>
+                    <td>${restock.harga_beli_per_satuan}</td>
+                    <td>${restock.jumlah_penambahan_stock}</td>
+                    <td>${formatTanggal(restock.tanggal_restock)}</td>
+                    <td>
+                        <button onclick="hapusRestock('${restock._id}')">Hapus</button>
+                        <button onclick="editRestock(
+                            '${restock._id}',
+                            '${restock.id_restock}',
+                            '${restock.id_suplier}',
+                            '${restock.id_produk}',
+                            '${restock.id_admin}',
+                            '${restock.nama_produk}',
+                            '${restock.harga_beli_per_satuan}',
+                            '${restock.jumlah_penambahan_stock}',
+                            '${restock.tanggal_restock}'
+                        )">Edit</button>
+                    </td>
+                `;
+                list.appendChild(tr);
+            });
+        }
+
+        async function tambahRestock(e){
+            e.preventDefault();
+            const id_restock = document.getElementById('id_restock').value;
+            const id_suplier = document.getElementById('id_suplier').value;
+            const id_produk = document.getElementById('id_produk').value;
+            const id_admin = document.getElementById('id_admin').value;
+            const nama_produk = document.getElementById('nama_produk').value;
+            const harga_beli_per_satuan = document.getElementById('harga_beli_per_satuan').value;
+            const jumlah_penambahan_stock = document.getElementById('jumlah_penambahan_stock').value;
+            const tanggal_restock = document.getElementById('tanggal_restock').value;
+
+            await fetch(apiURL, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    id_restock,
+                    id_suplier,
+                    id_produk,
+                    id_admin,
+                    nama_produk,
+                    harga_beli_per_satuan,
+                    jumlah_penambahan_stock,
+                    tanggal_restock
+                })
+            });
+            document.getElementById('restockForm').reset();
+            loadRestock();
+        }
+
+        async function hapusRestock(id){
+            await fetch(`${apiURL}/${id}`, { method: 'DELETE' });
+            loadRestock();
+        }
+
+        function editRestock(id, id_restock, id_suplier, id_produk, id_admin, nama_produk, harga_beli_per_satuan, jumlah_penambahan_stock, tanggal_restock){
+            document.getElementById('id_restock').value = id_restock;
+            document.getElementById('id_suplier').value = id_suplier;
+            document.getElementById('id_produk').value = id_produk;
+            document.getElementById('id_admin').value = id_admin;
+            document.getElementById('nama_produk').value = nama_produk;
+            document.getElementById('harga_beli_per_satuan').value = harga_beli_per_satuan;
+            document.getElementById('jumlah_penambahan_stock').value = jumlah_penambahan_stock;
+            document.getElementById('tanggal_restock').value = tanggal_restock;
+
+            const form = document.getElementById('restockForm');
+            form.removeEventListener('submit', tambahRestock);
+
+            form.onsubmit = async function (e) {
+                e.preventDefault();
+                await fetch(`${apiURL}/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id_restock: document.getElementById('id_restock').value,
+                        id_suplier: document.getElementById('id_suplier').value,
+                        id_produk: document.getElementById('id_produk').value,
+                        id_admin: document.getElementById('id_admin').value,
+                        nama_produk: document.getElementById('nama_produk').value,
+                        harga_beli_per_satuan: document.getElementById('harga_beli_per_satuan').value,
+                        jumlah_penambahan_stock: document.getElementById('jumlah_penambahan_stock').value,
+                        tanggal_restock: document.getElementById('tanggal_restock').value
+                    })
+                });
+                form.reset();
+                form.onsubmit = null;
+                form.addEventListener('submit', tambahRestock);
+                loadRestock();
+            };
+        }
+
+        document.getElementById('restockForm').addEventListener('submit', tambahRestock);
+        loadRestock();
+    </script>
+
+    <br><br>
+    <a href="index.html" style="
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+    ">⬅️ Kembali ke Beranda</a>
+</body>
+</html>

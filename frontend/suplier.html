@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CRUD Suplier</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        button {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Manajemen Suplier</h1>
+    <form id="suplierForm">
+        <input type="text" id="id_suplier" placeholder="ID Suplier" required>
+        <input type="text" id="nama" placeholder="Nama Suplier" required>
+        <input type="text" id="alamat" placeholder="Alamat Suplier" required>
+        <input type="number" id="contact" placeholder="Contact" required>
+        <input type="text" id="email" placeholder="Email Suplier" required>
+        <input type="text" id="status_kerjasama" placeholder="Status Kerja Sama" required>
+        <button type="submit">Tambah Suplier</button>
+    </form>
+
+    <table id="suplierTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nama</th>
+                <th>Alamat</th>
+                <th>Contact</th>
+                <th>Email</th>
+                <th>Status Kerjasama</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        const apiURL = 'http://localhost:3000/api/suplier';
+
+        async function loadSuplier() {
+            const res = await fetch(apiURL);
+            const data = await res.json();
+            const tbody = document.querySelector('#suplierTable tbody');
+            tbody.innerHTML = '';
+            data.forEach(suplier => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${suplier.id_suplier}</td>
+                    <td>${suplier.nama}</td>
+                    <td>${suplier.alamat}</td>
+                    <td>${suplier.contact}</td>
+                    <td>${suplier.email}</td>
+                    <td>${suplier.status_kerjasama}</td>
+                    <td>
+                        <button onclick="hapusSuplier('${suplier._id}')">Hapus</button>
+                        <button onclick="editSuplier('${suplier._id}', '${suplier.id_suplier}', '${suplier.nama}', '${suplier.alamat}', '${suplier.contact}', '${suplier.email}', '${suplier.status_kerjasama}')">Edit</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function tambahSuplier(e){
+            e.preventDefault();
+            const id_suplier = document.getElementById('id_suplier').value;
+            const nama = document.getElementById('nama').value;
+            const alamat = document.getElementById('alamat').value;
+            const contact = document.getElementById('contact').value;
+            const email = document.getElementById('email').value;
+            const status_kerjasama = document.getElementById('status_kerjasama').value;
+
+            await fetch(apiURL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_suplier, nama, alamat, contact, email, status_kerjasama })
+            });
+
+            document.getElementById('suplierForm').reset();
+            loadSuplier();
+        }
+
+        async function hapusSuplier(id) {
+            await fetch(`${apiURL}/${id}`, { method: 'DELETE' });
+            loadSuplier();
+        }
+
+        function editSuplier(id, id_suplier, nama, alamat, contact, email, status_kerjasama) {
+            document.getElementById('id_suplier').value = id_suplier;
+            document.getElementById('nama').value = nama;
+            document.getElementById('alamat').value = alamat;
+            document.getElementById('contact').value = contact;
+            document.getElementById('email').value = email;
+            document.getElementById('status_kerjasama').value = status_kerjasama;
+
+            const form = document.getElementById('suplierForm');
+            form.removeEventListener('submit', tambahSuplier);
+
+            form.onsubmit = async function (e) {
+                e.preventDefault();
+                await fetch(`${apiURL}/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id_suplier: document.getElementById('id_suplier').value,
+                        nama: document.getElementById('nama').value,
+                        alamat: document.getElementById('alamat').value,
+                        contact: document.getElementById('contact').value,
+                        email: document.getElementById('email').value,
+                        status_kerjasama: document.getElementById('status_kerjasama').value,
+                    })
+                });
+
+                form.reset();
+                form.onsubmit = null;
+                form.addEventListener('submit', tambahSuplier);
+                loadSuplier();
+            };
+        }
+
+        document.getElementById('suplierForm').addEventListener('submit', tambahSuplier);
+        loadSuplier();
+    </script>
+
+    <br><br>
+    <a href="index.html" style="
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+    ">⬅️ Kembali ke Beranda</a>
+</body>
+</html>

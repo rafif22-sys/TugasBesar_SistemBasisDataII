@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CRUD Admin</title>
+</head>
+<body>
+    <h1>Manajemen Admin</h1>
+    <form id="adminForm">
+        <input type="text" id="id_admin" placeholder="ID Admin" required>
+        <input type="text" id="nama" placeholder="Nama Admin" required>
+        <input type="number" id="gaji" placeholder="Gaji" required>
+        <input type="text" id="status" placeholder="Status Kerja" required>
+        <input type="text" id="username" placeholder="username admin" required>
+        <input type="text" id="password" placeholder="password admin" required>
+        <input type="text" id="id_pengawas" placeholder="ID Pengawas" required>
+        <input type="date" id="tanggal_rekrut" required>
+        <input type="date" id="tanggal_akhir_kontrak">
+        <input type="number" id="tunjangan" placeholder="Tunjangan Karyawan">
+
+        <button type="submit">Tambah Admin</button>
+    </form>
+
+    <br>
+    <table border="1" id="adminTable">
+        <thead>
+            <tr>
+                <th>Nama</th>
+                <th>Gaji</th>
+                <th>Status</th>
+                <th>ID Pengawas</th>
+                <th>Tanggal Rekrut</th>
+                <th>Tanggal Akhir Kontrak</th>
+                <th>Tunjangan</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+
+        <tbody id="adminList"></tbody>
+    </table>
+
+    <script>
+        const apiURL = 'http://localhost:3000/api/admin';
+
+        function formatTanggal(tanggalISO) {
+            if (!tanggalISO) return '-';
+            const date = new Date(tanggalISO);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        async function loadAdmin() {
+            const res = await fetch(apiURL);
+            const data = await res.json();
+            const list = document.getElementById('adminList');
+            list.innerHTML = '';
+            data.forEach(admin => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${admin.nama}</td>
+                    <td>${admin.gaji}</td>
+                    <td>${admin.status}</td>
+                    <td>${admin.id_pengawas}</td>
+                    <td>${formatTanggal(admin.tanggal_rekrut)}</td>
+                    <td>${formatTanggal(admin.tanggal_akhir_kontrak)}</td>
+                    <td>${admin.tunjangan}</td>
+                    <td>
+                        <button onclick="hapusAdmin('${admin._id}')">Hapus</button>
+                        <button onclick="editAdmin(
+                            '${admin._id}',
+                            '${admin.id_admin}',
+                            '${admin.nama}',
+                            '${admin.gaji}',
+                            '${admin.status}',
+                            '${admin.akun.username}',
+                            '${admin.akun.password}',
+                            '${admin.id_pengawas}',
+                            '${admin.tanggal_rekrut}',
+                            '${admin.tanggal_akhir_kontrak}',
+                            '${admin.tunjangan}'
+                        )">Edit</button>
+                    </td>
+                `;
+                list.appendChild(tr);
+            });
+        }
+
+        async function tambahAdmin(e) {
+            e.preventDefault();
+            const id_admin = document.getElementById('id_admin').value;
+            const nama = document.getElementById('nama').value;
+            const gaji = document.getElementById('gaji').value;
+            const status = document.getElementById('status').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const id_pengawas = document.getElementById('id_pengawas').value;
+            const tanggal_rekrut = document.getElementById('tanggal_rekrut').value;
+            const tanggal_akhir_kontrak = document.getElementById('tanggal_akhir_kontrak').value.trim() || null;
+            const tunjangan = parseInt(document.getElementById('tunjangan').value) || 0;
+
+            await fetch(apiURL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_admin,
+                    nama,
+                    gaji,
+                    status,
+                    akun: { username, password },
+                    id_pengawas,
+                    tanggal_rekrut,
+                    tanggal_akhir_kontrak,
+                    tunjangan
+                })
+            });
+            document.getElementById('adminForm').reset();
+            loadAdmin();
+        }
+
+        async function hapusAdmin(id) {
+            await fetch(`${apiURL}/${id}`, { method: 'DELETE' });
+            loadAdmin();
+        }
+
+        function editAdmin(id, id_admin, nama, gaji, status, username, password, id_pengawas, tanggal_rekrut, tanggal_akhir_kontrak, tunjangan) {
+            document.getElementById('id_admin').value = id_admin;
+            document.getElementById('nama').value = nama;
+            document.getElementById('gaji').value = gaji;
+            document.getElementById('status').value = status;
+            document.getElementById('username').value = username;
+            document.getElementById('password').value = password;
+            document.getElementById('id_pengawas').value = id_pengawas;
+            document.getElementById('tanggal_rekrut').value = tanggal_rekrut;
+            document.getElementById('tanggal_akhir_kontrak').value = tanggal_akhir_kontrak;
+            document.getElementById('tunjangan').value = tunjangan;
+
+            const form = document.getElementById('adminForm');
+            form.removeEventListener('submit', tambahAdmin);
+
+            form.onsubmit = async function (e) {
+                e.preventDefault();
+                await fetch(`${apiURL}/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id_admin: document.getElementById('id_admin').value,
+                        nama: document.getElementById('nama').value,
+                        gaji: document.getElementById('gaji').value,
+                        status: document.getElementById('status').value,
+                        akun: {
+                            username: document.getElementById('username').value,
+                            password: document.getElementById('password').value
+                        },
+                        id_pengawas: document.getElementById('id_pengawas').value,
+                        tanggal_rekrut: document.getElementById('tanggal_rekrut').value,
+                        tanggal_akhir_kontrak: document.getElementById('tanggal_akhir_kontrak').value.trim() || null,
+                        tunjangan: document.getElementById('tunjangan').value
+                    })
+                });
+                form.reset();
+                form.onsubmit = null;
+                form.addEventListener('submit', tambahAdmin);
+                loadAdmin();
+            };
+        }
+
+        document.getElementById('adminForm').addEventListener('submit', tambahAdmin);
+        loadAdmin();
+    </script>
+
+    <br><br>
+    <a href="index.html" style="
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    ">⬅️ Kembali ke Beranda</a>
+</body>
+</html>

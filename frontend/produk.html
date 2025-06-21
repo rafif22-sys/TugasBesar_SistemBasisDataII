@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CRUD PRODUK</title>
+</head>
+<body>
+    <h1>Manajemen Produk </h1>
+    <form id="produkForm">
+        <input type="text" id="id_produk" placeholder="ID Produk" required>
+        <input type="text" id="nama" placeholder="Nama Produk" required>
+        <input type="text" id="jenis" placeholder="Jenis Produk" required>
+        <input type="text" id="id_suplier" placeholder="ID Suplier" required>
+        <input type="number" id="stok" placeholder="Stok" required>
+        <input type="number" id="harga_beli" placeholder="Harga Beli" required>
+        <input type="number" id="harga_jual" placeholder="Harga Jual" required>
+        <input type="text" id="satuan" placeholder="Satuan" required>
+        <input type="text" id="no_rak" placeholder="Nomor Rak" required>
+        <input type="date" id="tanggal_terakhir_restock" placeholder="Tanggal Terakhir Restock" required>
+        <input type="text" id="jenis_penyimpanan" placeholder="Jenis Penyimpanan" required>
+        <h3>Variasi Produk</h3>
+        <div id="variasi-container"></div>
+        <button type="button" onclick="tambahVariasi()">+ Tambah Variasi</button>
+        <button type="submit">Tambah Produk</button>
+    </form>
+
+    <table border="1" cellpadding="5" id="produkTable">
+        <thead>
+            <tr>
+                <th>ID Produk</th>
+                <th>Nama</th>
+                <th>Stok</th>
+                <th>Harga Beli</th>
+                <th>No Rak</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody id="produkList">
+            <!-- Data produk akan dimuat di sini -->
+        </tbody>
+    </table>
+
+
+    <script>
+        const apiURL = 'http://localhost:3000/api/produk';
+
+        function formatTanggal(tanggalISO) {
+            const date = new Date(tanggalISO);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0'); // bulan dimulai dari 0
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        let variasiCounter = 0;
+
+        function tambahVariasi() {
+            const container = document.getElementById('variasi-container');
+
+            const div = document.createElement('div');
+            div.className = 'variasi-group';
+            div.dataset.index = variasiCounter++;
+
+            div.innerHTML = `
+                <fieldset style="border:1px solid #ccc; margin:10px; padding:10px">
+                    <legend>Variasi</legend>
+                    <div class="fields"></div>
+                    <button type="button" onclick="tambahField(this)">+ Tambah Field</button>
+                    <button type="button" onclick="hapusVariasi(this)">❌ Hapus Variasi</button>
+                </fieldset>
+            `;
+
+            container.appendChild(div);
+        }
+
+        function tambahField(button) {
+            const fieldsDiv = button.parentElement.querySelector('.fields');
+            const inputKey = document.createElement('input');
+            const inputValue = document.createElement('input');
+
+            inputKey.type = 'text';
+            inputKey.placeholder = 'Nama Variasi (cth: rasa)';
+            inputKey.required = true;
+
+            inputValue.type = 'text';
+            inputValue.placeholder = 'Nilai';
+            inputValue.required = true;
+
+            fieldsDiv.appendChild(inputKey);
+            fieldsDiv.appendChild(inputValue);
+            fieldsDiv.appendChild(document.createElement('br'));
+        }
+
+        function hapusVariasi(button) {
+            button.closest('.variasi-group').remove();
+        }
+
+        function ambilVariasi() {
+            const variasiEls = document.querySelectorAll('.variasi-group');
+            const variasiData = [];
+
+            variasiEls.forEach(group => {
+                const fields = group.querySelectorAll('.fields input');
+                const obj = {};
+                for (let i = 0; i < fields.length; i += 2) {
+                    const key = fields[i].value.trim();
+                    const value = fields[i + 1].value.trim();
+                    if (key) obj[key] = value;
+                }
+                if (Object.keys(obj).length > 0) {
+                    variasiData.push(obj);
+                }
+            });
+
+            return variasiData;
+        }
+
+        async function loadProduk() {
+            const res = await fetch(apiURL);
+            const data = await res.json();
+            const list = document.getElementById('produkList');
+            list.innerHTML = '';
+
+            data.forEach(produk => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${produk.id_produk}</td>
+                    <td>${produk.nama}</td>
+                    <td>${produk.stok}</td>
+                    <td>Rp${produk.harga_beli}</td>
+                    <td>${produk.no_rak}</td>
+                    <td>
+                        <button onclick="hapusProduk('${produk._id}')">Hapus</button>
+                        <button onclick='editProduk(
+                            "${produk._id}",
+                            "${produk.id_produk}",
+                            "${produk.nama}",
+                            "${produk.jenis}",
+                            "${produk.id_suplier}",
+                            "${produk.stok}",
+                            "${produk.harga_beli}",
+                            "${produk.harga_jual}",
+                            "${produk.satuan}",
+                            "${produk.no_rak}",
+                            "${produk.tanggal_terakhir_restock}",
+                            "${produk.jenis_penyimpanan}",
+                            ${JSON.stringify(produk.variasi || [])}
+                        )'>Edit</button>
+                    </td>
+                `;
+                list.appendChild(tr);
+            });
+        }
+
+
+        async function tambahProduk(e){
+            e.preventDefault();
+            const id_produk = document.getElementById('id_produk').value;
+            const nama = document.getElementById('nama').value;
+            const jenis = document.getElementById('jenis').value;
+            const id_suplier = document.getElementById('id_suplier').value;
+            const stok = document.getElementById('stok').value;
+            const harga_beli = document.getElementById('harga_beli').value;
+            const harga_jual = document.getElementById('harga_jual').value;
+            const satuan = document.getElementById('satuan').value;
+            const no_rak = document.getElementById('no_rak').value;
+            const tanggal_terakhir_restock = document.getElementById('tanggal_terakhir_restock').value;
+            const jenis_penyimpanan = document.getElementById('jenis_penyimpanan').value;
+            const variasi = ambilVariasi(); 
+
+
+            await fetch(apiURL, {
+                method:'POST',
+                headers : {'Content-Type' :'application/json'},
+                body: JSON.stringify({id_produk,nama,jenis,id_suplier,stok, harga_beli, harga_jual, satuan, no_rak, tanggal_terakhir_restock, jenis_penyimpanan,variasi})
+            });
+            document.getElementById('produkForm').reset();
+            loadProduk();
+        }
+
+        async function hapusProduk(id){
+            await fetch(`${apiURL}/${id}`, {method:'DELETE'});
+            loadProduk();
+        }
+
+        function editProduk(id,id_produk, nama,jenis,id_suplier,stok, harga_beli, harga_jual, satuan, no_rak, tanggal_terakhir_restock, jenis_penyimpanan,variasi){
+            document.getElementById('id_produk').value =  id_produk;
+            document.getElementById('nama').value = nama;
+            document.getElementById('jenis').value = jenis;
+            document.getElementById('id_suplier').value = id_suplier;
+            document.getElementById('stok').value = stok;
+            document.getElementById('harga_beli').value = harga_beli;
+            document.getElementById('harga_jual').value = harga_jual;
+            document.getElementById('satuan').value = satuan;
+            document.getElementById('no_rak').value = no_rak;
+            document.getElementById('tanggal_terakhir_restock').value = tanggal_terakhir_restock;
+            document.getElementById('jenis_penyimpanan').value = jenis_penyimpanan;
+            const variasiContainer = document.getElementById('variasi-container');
+            variasiContainer.innerHTML = ''; 
+
+            if (Array.isArray(variasi)) {
+                variasi.forEach(v => {
+                    const div = document.createElement('div');
+                    div.className = 'variasi-group';
+
+                    div.innerHTML = `
+                        <fieldset style="border:1px solid #ccc; margin:10px; padding:10px">
+                            <legend>Variasi</legend>
+                            <div class="fields"></div>
+                            <button type="button" onclick="tambahField(this)">+ Tambah Field</button>
+                            <button type="button" onclick="hapusVariasi(this)">❌ Hapus Variasi</button>
+                        </fieldset>
+                    `;
+
+                    const fieldsDiv = div.querySelector('.fields');
+
+                    for (const key in v) {
+                        const inputKey = document.createElement('input');
+                        inputKey.type = 'text';
+                        inputKey.value = key;
+                        inputKey.placeholder = 'Nama variasi';
+                        inputKey.required = true;
+
+                        const inputValue = document.createElement('input');
+                        inputValue.type = 'text';
+                        inputValue.value = v[key];
+                        inputValue.placeholder = 'Nilai';
+                        inputValue.required = true;
+
+                        fieldsDiv.appendChild(inputKey);
+                        fieldsDiv.appendChild(inputValue);
+                        fieldsDiv.appendChild(document.createElement('br'));
+                    }
+
+                    variasiContainer.appendChild(div);
+                });
+            }
+
+            const form = document.getElementById('produkForm');
+            form.removeEventListener('submit', tambahProduk);
+
+
+            form.onsubmit = async function (e) {
+                e.preventDefault();
+                await fetch(`${apiURL}/${id}`,{
+                    method: 'PUT',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({
+                        id_produk : document.getElementById('id_produk').value,
+                        nama : document.getElementById('nama').value,
+                        jenis : document.getElementById('jenis').value,
+                        id_suplier : document.getElementById('id_suplier').value,
+                        stok : document.getElementById('stok').value,
+                        harga_beli : document.getElementById('harga_beli').value,
+                        harga_jual : document.getElementById('harga_jual').value,
+                        satuan : document.getElementById('satuan').value,
+                        no_rak : document.getElementById('no_rak').value,
+                        tanggal_terakhir_restock : document.getElementById('tanggal_terakhir_restock').value,
+                        jenis_penyimpanan : document.getElementById('jenis_penyimpanan').value,
+                        variasi: ambilVariasi()
+                    }) 
+                });
+                form.reset();
+                form.onsubmit = null;
+                form.addEventListener('submit', tambahProduk);
+                loadProduk();
+            };
+        }
+
+        document.getElementById('produkForm').addEventListener('submit', tambahProduk);
+        loadProduk();
+    </script>
+    <br><br>
+    <a href="index.html" style="
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+">⬅️ Kembali ke Beranda</a>
+
+</body>
+</html>

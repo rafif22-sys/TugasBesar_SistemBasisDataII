@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CRUD Supervisor</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #cccccc;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        button {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Manajemen Supervisor</h1>
+    <form id="supervisorForm">
+        <input type="text" id="id_supervisor" placeholder="ID Supervisor" required>
+        <input type="text" id="nama" placeholder="Nama Supervisor" required>
+        <input type="number" id="gaji" placeholder="Gaji" required>
+        <input type="number" id="no_hp" placeholder="Nomor HP" required>
+        <input type="text" id="email" placeholder="Email Supervisor" required>
+        <button type="submit">Tambah Supervisor</button>
+    </form>
+
+    <table id="supervisorTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nama</th>
+                <th>Gaji</th>
+                <th>No HP</th>
+                <th>Email</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Baris supervisor akan dimasukkan di sini -->
+        </tbody>
+    </table>
+
+    <script>
+        const apiURL = 'http://localhost:3000/api/supervisor';
+
+        async function loadSupervisor() {
+            const res = await fetch(apiURL);
+            const data = await res.json();
+            const tbody = document.querySelector('#supervisorTable tbody');
+            tbody.innerHTML = '';
+            data.forEach(supervisor => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${supervisor.id_supervisor}</td>
+                    <td>${supervisor.nama}</td>
+                    <td>${supervisor.gaji}</td>
+                    <td>${supervisor.no_hp}</td>
+                    <td>${supervisor.email}</td>
+                    <td>
+                        <button onclick="hapusSupervisor('${supervisor._id}')">Hapus</button>
+                        <button onclick="editSupervisor('${supervisor._id}', '${supervisor.id_supervisor}', '${supervisor.nama}', '${supervisor.gaji}', '${supervisor.no_hp}', '${supervisor.email}')">Edit</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function tambahSupervisor(e){
+            e.preventDefault();
+            const id_supervisor = document.getElementById('id_supervisor').value;
+            const nama = document.getElementById('nama').value;
+            const gaji = document.getElementById('gaji').value;
+            const no_hp = document.getElementById('no_hp').value;
+            const email = document.getElementById('email').value;
+
+            await fetch(apiURL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_supervisor, nama, gaji, no_hp, email })
+            });
+
+            document.getElementById('supervisorForm').reset();
+            loadSupervisor();
+        }
+
+        async function hapusSupervisor(id) {
+            await fetch(`${apiURL}/${id}`, { method: 'DELETE' });
+            loadSupervisor();
+        }
+
+        function editSupervisor(id, id_supervisor, nama, gaji, no_hp, email) {
+            document.getElementById('id_supervisor').value = id_supervisor;
+            document.getElementById('nama').value = nama;
+            document.getElementById('gaji').value = gaji;
+            document.getElementById('no_hp').value = no_hp;
+            document.getElementById('email').value = email;
+
+            const form = document.getElementById('supervisorForm');
+            form.removeEventListener('submit', tambahSupervisor);
+
+            form.onsubmit = async function (e) {
+                e.preventDefault();
+                await fetch(`${apiURL}/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id_supervisor: document.getElementById('id_supervisor').value,
+                        nama: document.getElementById('nama').value,
+                        gaji: document.getElementById('gaji').value,
+                        no_hp: document.getElementById('no_hp').value,
+                        email: document.getElementById('email').value,
+                    })
+                });
+                form.reset();
+                form.onsubmit = null;
+                form.addEventListener('submit', tambahSupervisor);
+                loadSupervisor();
+            };
+        }
+
+        document.getElementById('supervisorForm').addEventListener('submit', tambahSupervisor);
+        loadSupervisor();
+    </script>
+
+    <br><br>
+    <a href="index.html" style="
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+    ">⬅️ Kembali ke Beranda</a>
+</body>
+</html>

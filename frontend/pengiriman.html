@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CRUD Pengiriman</title>
+</head>
+<body>
+    <h1>Manajemen Pengiriman</h1>
+    <form id="pengirimanForm">
+        <input type="text" id="id_pengiriman" placeholder="ID Pengiriman" required>
+        <input type="text" id="id_produk" placeholder="ID Produk" required>
+        <input type="text" id="nama_produk" placeholder="Nama Produk" required>
+        <input type="number" id="jumlah_pengiriman" placeholder="Jumlah Pengiriman" required>
+        <input type="text" id="id_gerai" placeholder="ID Gerai" required>
+        <input type="text" id="kota_tujuan" placeholder="Kota Tujuan" required>
+        <button type="submit">Tambah Pengiriman</button>
+    </form>
+
+    <br>
+    <table border="1" id="pengirimanTable">
+        <thead>
+            <tr>
+                <th>ID Pengiriman</th>
+                <th>ID Produk</th>
+                <th>Nama Produk</th>
+                <th>Jumlah</th>
+                <th>ID Gerai</th>
+                <th>Kota Tujuan</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody id="pengirimanList"></tbody>
+    </table>
+
+    <script>
+        const apiURL = 'http://localhost:3000/api/pengiriman';
+
+        async function loadPengiriman() {
+            const res = await fetch(apiURL);
+            const data = await res.json();
+            const list = document.getElementById('pengirimanList');
+            list.innerHTML = '';
+            data.forEach(pengiriman => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${pengiriman.id_pengiriman}</td>
+                    <td>${pengiriman.id_produk}</td>
+                    <td>${pengiriman.nama_produk}</td>
+                    <td>${pengiriman.jumlah_pengiriman}</td>
+                    <td>${pengiriman.id_gerai}</td>
+                    <td>${pengiriman.kota_tujuan}</td>
+                    <td>
+                        <button onclick="hapusPengiriman('${pengiriman._id}')">Hapus</button>
+                        <button onclick="editPengiriman(
+                            '${pengiriman._id}',
+                            '${pengiriman.id_pengiriman}',
+                            '${pengiriman.id_produk}',
+                            '${pengiriman.nama_produk}',
+                            '${pengiriman.jumlah_pengiriman}',
+                            '${pengiriman.id_gerai}',
+                            '${pengiriman.kota_tujuan}'
+                        )">Edit</button>
+                    </td>
+                `;
+                list.appendChild(tr);
+            });
+        }
+
+        async function tambahPengiriman(e){
+            e.preventDefault();
+            const id_pengiriman = document.getElementById('id_pengiriman').value;
+            const id_produk = document.getElementById('id_produk').value;
+            const nama_produk = document.getElementById('nama_produk').value;
+            const jumlah_pengiriman = document.getElementById('jumlah_pengiriman').value;
+            const id_gerai = document.getElementById('id_gerai').value;
+            const kota_tujuan = document.getElementById('kota_tujuan').value;
+
+            await fetch(apiURL, {
+                method:'POST',
+                headers : {'Content-Type' :'application/json'},
+                body: JSON.stringify({ id_pengiriman, id_produk, nama_produk, jumlah_pengiriman, id_gerai, kota_tujuan })
+            });
+            document.getElementById('pengirimanForm').reset();
+            loadPengiriman();
+        }
+
+        async function hapusPengiriman(id){
+            await fetch(`${apiURL}/${id}`, { method:'DELETE' });
+            loadPengiriman();
+        }
+
+        function editPengiriman(id, id_pengiriman, id_produk, nama_produk, jumlah_pengiriman, id_gerai, kota_tujuan){
+            document.getElementById('id_pengiriman').value = id_pengiriman;
+            document.getElementById('id_produk').value = id_produk;
+            document.getElementById('nama_produk').value = nama_produk;
+            document.getElementById('jumlah_pengiriman').value = jumlah_pengiriman;
+            document.getElementById('id_gerai').value = id_gerai;
+            document.getElementById('kota_tujuan').value = kota_tujuan;
+
+            const form = document.getElementById('pengirimanForm');
+            form.removeEventListener('submit', tambahPengiriman);
+
+            form.onsubmit = async function (e) {
+                e.preventDefault();
+                await fetch(`${apiURL}/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type':'application/json' },
+                    body: JSON.stringify({
+                        id_pengiriman: document.getElementById('id_pengiriman').value,
+                        id_produk: document.getElementById('id_produk').value,
+                        nama_produk: document.getElementById('nama_produk').value,
+                        jumlah_pengiriman: document.getElementById('jumlah_pengiriman').value,
+                        id_gerai: document.getElementById('id_gerai').value,
+                        kota_tujuan: document.getElementById('kota_tujuan').value
+                    })
+                });
+                form.reset();
+                form.onsubmit = null;
+                form.addEventListener('submit', tambahPengiriman);
+                loadPengiriman();
+            };
+        }
+
+        document.getElementById('pengirimanForm').addEventListener('submit', tambahPengiriman);
+        loadPengiriman();
+    </script>
+
+    <br><br>
+    <a href="index.html" style="
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+    ">⬅️ Kembali ke Beranda</a>
+</body>
+</html>
