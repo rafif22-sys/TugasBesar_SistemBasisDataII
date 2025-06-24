@@ -10,7 +10,7 @@ const barangSchema = new Schema({
     harga_beli : { type: Number, required: true },
     harga_jual : { type: Number, required: true },
     satuan : { type: String, required: true },
-    variasi : [{ type: Schema.Types.Mixed }],  // fleksibel!
+    variasi : [{ type: Schema.Types.Mixed }],  
     no_rak : { type: String, required: true },
     tanggal_terakhir_restock : { type: Date, required: true },
     jenis_penyimpanan : { type: String, required: true }

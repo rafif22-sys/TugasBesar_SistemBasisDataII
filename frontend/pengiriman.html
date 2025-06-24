@@ -13,6 +13,7 @@
         <input type="number" id="jumlah_pengiriman" placeholder="Jumlah Pengiriman" required>
         <input type="text" id="id_gerai" placeholder="ID Gerai" required>
         <input type="text" id="kota_tujuan" placeholder="Kota Tujuan" required>
+        <input type="date" id="tanggal_pengiriman" required>
         <button type="submit">Tambah Pengiriman</button>
     </form>
 
@@ -26,6 +27,7 @@
                 <th>Jumlah</th>
                 <th>ID Gerai</th>
                 <th>Kota Tujuan</th>
+                <th>Tanggal Pengiriman</th>
                 <th>Aksi</th>
             </tr>
         </thead>
@@ -34,6 +36,14 @@
 
     <script>
         const apiURL = 'http://localhost:3000/api/pengiriman';
+
+        function formatTanggal(tanggalISO) {
+            const date = new Date(tanggalISO);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0'); // bulan dimulai dari 0
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
 
         async function loadPengiriman() {
             const res = await fetch(apiURL);
@@ -49,6 +59,7 @@
                     <td>${pengiriman.jumlah_pengiriman}</td>
                     <td>${pengiriman.id_gerai}</td>
                     <td>${pengiriman.kota_tujuan}</td>
+                    <td>${formatTanggal(pengiriman.tanggal_pengiriman || '-')}</td>
                     <td>
                         <button onclick="hapusPengiriman('${pengiriman._id}')">Hapus</button>
                         <button onclick="editPengiriman(
@@ -58,7 +69,8 @@
                             '${pengiriman.nama_produk}',
                             '${pengiriman.jumlah_pengiriman}',
                             '${pengiriman.id_gerai}',
-                            '${pengiriman.kota_tujuan}'
+                            '${pengiriman.kota_tujuan}',
+                            '${pengiriman.tanggal_pengiriman}'
                         )">Edit</button>
                     </td>
                 `;
@@ -74,11 +86,12 @@
             const jumlah_pengiriman = document.getElementById('jumlah_pengiriman').value;
             const id_gerai = document.getElementById('id_gerai').value;
             const kota_tujuan = document.getElementById('kota_tujuan').value;
+            const tanggal_pengiriman = document.getElementById('tanggal_pengiriman').value;
 
             await fetch(apiURL, {
                 method:'POST',
                 headers : {'Content-Type' :'application/json'},
-                body: JSON.stringify({ id_pengiriman, id_produk, nama_produk, jumlah_pengiriman, id_gerai, kota_tujuan })
+                body: JSON.stringify({ id_pengiriman, id_produk, nama_produk, jumlah_pengiriman, id_gerai, kota_tujuan, tanggal_pengiriman })
             });
             document.getElementById('pengirimanForm').reset();
             loadPengiriman();
@@ -89,13 +102,14 @@
             loadPengiriman();
         }
 
-        function editPengiriman(id, id_pengiriman, id_produk, nama_produk, jumlah_pengiriman, id_gerai, kota_tujuan){
+        function editPengiriman(id, id_pengiriman, id_produk, nama_produk, jumlah_pengiriman, id_gerai, kota_tujuan, tanggal_pengiriman){
             document.getElementById('id_pengiriman').value = id_pengiriman;
             document.getElementById('id_produk').value = id_produk;
             document.getElementById('nama_produk').value = nama_produk;
             document.getElementById('jumlah_pengiriman').value = jumlah_pengiriman;
             document.getElementById('id_gerai').value = id_gerai;
             document.getElementById('kota_tujuan').value = kota_tujuan;
+            document.getElementById('tanggal_pengiriman').value = tanggal_pengiriman;
 
             const form = document.getElementById('pengirimanForm');
             form.removeEventListener('submit', tambahPengiriman);
@@ -111,7 +125,8 @@
                         nama_produk: document.getElementById('nama_produk').value,
                         jumlah_pengiriman: document.getElementById('jumlah_pengiriman').value,
                         id_gerai: document.getElementById('id_gerai').value,
-                        kota_tujuan: document.getElementById('kota_tujuan').value
+                        kota_tujuan: document.getElementById('kota_tujuan').value,
+                        tanggal_pengiriman: document.getElementById('tanggal_pengiriman').value
                     })
                 });
                 form.reset();

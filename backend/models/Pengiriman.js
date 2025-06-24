@@ -6,7 +6,8 @@ const pengirimanSchema = new mongoose.Schema({
     nama_produk:{type: String, required:true},
     jumlah_pengiriman : {type:Number,required:true},
     id_gerai : {type:String,required:true},  
-    kota_tujuan : {type:String,required:true}
+    kota_tujuan : {type:String,required:true},
+    tanggal_pengiriman : { type: Date, required: true }
     },
     {collection:'pengiriman'}
 );
